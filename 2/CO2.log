@@ -491,3 +491,73 @@ Per MPI rank memory allocation (min/avg/max) = 24.46 | 24.65 | 24.85 Mbytes
     184000  -767.76852      128.88864      219.86996      0.5          
     185000  -742.88926     -312.60453      220.88099      0.5          
     186000  -681.24232     -168.88262      221.72167      0.5          
+    187000  -774.97466      114.40792      221.06328      0.5          
+    188000  -687.1335       4.1360228      220.00585      0.5          
+    189000  -782.23806     -20.527976      216.91838      0.5          
+    190000  -783.91141      118.06364      217.37733      0.5          
+    191000  -794.51479     -172.56095      218.95517      0.5          
+    192000  -708.71861     -178.11521      222.1194       0.5          
+    193000  -645.35498      237.58866      223.97467      0.5          
+    194000  -598.18361      13.284478      223.46964      0.5          
+    195000  -732.84555     -132.01601      217.90934      0.5          
+    196000  -707.51935     -42.793412      221.72335      0.5          
+    197000  -697.88521     -74.850599      218.07446      0.5          
+    198000  -629.19191     -104.93788      217.40058      0.5          
+    199000  -656.96143     -238.02246      221.47789      0.5          
+    200000  -618.86864     -317.47459      220.07042      0.5          
+Loop time of 5047.92 on 2 procs for 200000 steps with 7050 atoms
+
+Performance: 1.712 ns/day, 14.022 hours/ns, 39.620 timesteps/s, 279.323 katom-step/s
+99.5% CPU use with 2 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 4094.7     | 4194.3     | 4293.9     | 153.8 | 83.09
+Bond    | 17.045     | 17.478     | 17.911     |  10.4 |  0.35
+Kspace  | 635.77     | 733.88     | 831.99     | 362.1 | 14.54
+Neigh   | 40.204     | 40.207     | 40.21      |   0.0 |  0.80
+Comm    | 29.892     | 31.483     | 33.075     |  28.4 |  0.62
+Output  | 0.034244   | 0.072569   | 0.11089    |  14.2 |  0.00
+Modify  | 28.104     | 28.444     | 28.785     |   6.4 |  0.56
+Other   |            | 2.09       |            |       |  0.04
+
+Nlocal:           3525 ave        3539 max        3511 min
+Histogram: 1 0 0 0 0 0 0 0 0 1
+Nghost:        14119.5 ave       14390 max       13849 min
+Histogram: 1 0 0 0 0 0 0 0 0 1
+Neighs:    1.46424e+06 ave 1.46953e+06 max 1.45896e+06 min
+Histogram: 1 0 0 0 0 0 0 0 0 1
+
+Total # of neighbors = 2928486
+Ave neighs/atom = 415.38809
+Ave special neighs/atom = 2
+Neighbor list builds = 1014
+Dangerous builds = 0
+
+unfix           NVT
+unfix           COM_DRIFT
+unfix           NVE
+unfix           CPU_BALANCE
+unfix           dens_profile
+unfix           1
+unfix           2
+unfix           3
+
+write_data      ${NAME}_final.data
+write_data      CO2_final.data
+System init for write_data ...
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/kspace.cpp:342)
+  G vector (1/distance) = 0.20169663
+  grid = 24 24 80
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.00286774
+  estimated relative force accuracy = 8.6361139e-06
+  using single precision FFTW3
+  3d grid and FFT values/proc = 50654 23040
+Generated 1 of 1 mixed pair_coeff terms from arithmetic mixing rule
+Last active /omp style is kspace_style pppm/omp
+reset_timestep  0
+
+quit

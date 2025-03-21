@@ -1,0 +1,22 @@
+
+Elapsed times including step IDs:
+JobID|JobName|Elapsed|ElapsedRaw
+10690761|CSVR_T_220_B_1_S_1|00:11:23|683
+10690761.batch|batch|00:11:23|683
+10690761.extern|extern|00:11:23|683
+10690761.0|lmp|00:11:07|667
+
+JOB STATISTICS
+==============
+Job ID: 10690761
+Cluster: snellius
+User/Group: draju/draju
+State: RUNNING
+Nodes: 1
+Cores per node: 32
+CPU Utilized: 05:52:17
+CPU Efficiency: 96.71% of 06:04:16 core-walltime
+Job Wall-clock time: 00:11:23
+Memory Utilized: 1.15 GB (estimated maximum)
+Memory Efficiency: 2.04% of 56.00 GB (1.75 GB/core)
+WARNING: Efficiency statistics may be misleading for RUNNING jobs.

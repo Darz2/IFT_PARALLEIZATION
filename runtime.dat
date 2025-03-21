@@ -1,12 +1,12 @@
 #parallelization study for Lammps for computing interfacial tension of inhomogenous systems for 1 ns in NVT ensemble
 #CPUs time/study
-1 201327.21
-2 104724
-4 55325
-8 30572
-12 22380
-16 21180
-20 14777
-24 13527
-28 11409
-32 11013
+1 10663
+2 5346
+4 2907
+8 1583
+12 1227
+16 1347
+20 852
+24 944
+28 649
+32 667

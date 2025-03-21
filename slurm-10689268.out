@@ -1,0 +1,32 @@
+20
+
+/gpfs/scratch1/shared/draju/TRAPPE_FLEXIBLE/cutoff_14
+24
+
+/gpfs/scratch1/shared/draju/TRAPPE_FLEXIBLE/cutoff_14
+28
+
+/gpfs/scratch1/shared/draju/TRAPPE_FLEXIBLE/cutoff_14
+Elapsed times including step IDs:
+JobID|JobName|Elapsed|ElapsedRaw
+10689268|Eff-1|00:16:00|960
+10689268.batch|batch|00:16:00|960
+10689268.extern|extern|00:16:00|960
+10689268.0|bash|00:14:12|852
+10689268.1|bash|00:10:49|649
+10689268.2|bash|00:15:44|944
+
+JOB STATISTICS
+==============
+Job ID: 10689268
+Cluster: snellius
+User/Group: draju/draju
+State: RUNNING
+Nodes: 1
+Cores per node: 96
+CPU Utilized: 15:50:44
+CPU Efficiency: 61.90% of 1-01:36:00 core-walltime
+Job Wall-clock time: 00:16:00
+Memory Utilized: 912.59 MB (estimated maximum)
+Memory Efficiency: 0.53% of 168.00 GB (1.75 GB/core)
+WARNING: Efficiency statistics may be misleading for RUNNING jobs.

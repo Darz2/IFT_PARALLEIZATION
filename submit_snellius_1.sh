@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH -J Eff-1
-#SBATCH -t 1-00:00:00
+#SBATCH -t 02:00:00
 #SBATCH -p genoa
 #SBATCH -N 1
 #SBATCH --ntasks=96
@@ -21,7 +21,11 @@ do
     echo $D
     cd $D
 
-    srun --ntasks=$D --nodes=1 --cpus-per-task=1 --mem-per-cpu=1700 $lmp/lmp -in simulation.in -sf omp -pk omp 1 > slurm_$D.out &
+    srun --ntasks="$D" --nodes=1 --cpus-per-task=1 --mem-per-cpu=1700 bash -c '
+            echo "Directory '"$D"' has Step ID: ${SLURM_JOB_ID}.${SLURM_STEP_ID}"
+            '"$lmp"'/lmp -in simulation.in -sf omp -pk omp 1
+        ' > slurm_"$D".out &
+        
     echo ${SLURM_STEPID}
     cd -
 

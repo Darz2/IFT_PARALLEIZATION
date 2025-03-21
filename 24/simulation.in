@@ -42,7 +42,7 @@ variable  PE               equal pe
 variable  TOT_ENG          equal etotal
 variable  ECOUPLE          equal ecouple
 variable  ECONSERVE        equal econserve
-variable  Nnvt             equal 2000000     # 1 ns
+variable  Nnvt             equal 200000     # 1 ns
 
 #----------------------------------------------------------------------------#
 #                        Simulation cell creation 
@@ -139,8 +139,6 @@ restart         ${restartfreq} restart_${NAME}.1 restart_${NAME}.2
 run             ${Nnvt}
 
 unfix           NVT
-run             ${Nnvt}
-
 unfix           COM_DRIFT
 unfix           NVE
 unfix           CPU_BALANCE
