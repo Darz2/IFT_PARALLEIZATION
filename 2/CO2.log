@@ -1,0 +1,489 @@
+units		    real
+atom_style	    full
+boundary        p p p
+pair_style      lj/cut/coul/long 14
+pair_modify     shift yes mix arithmetic tail no
+kspace_style    pppm 1e-5
+bond_style      harmonic
+angle_style     harmonic
+processors      2 1 *
+
+#----------------------------------------------------------------------------#
+#                               Variables
+#----------------------------------------------------------------------------#
+
+variable  TEMP_INDEX       equal 220
+variable  simulationTemp   equal ${TEMP_INDEX}
+variable  simulationTemp   equal 220
+variable  timestep         equal 0.5
+variable  RandomSeed       equal 1000
+variable  Seed_L           equal ${RandomSeed}*7
+variable  Seed_L           equal 1000*7
+variable  Seed_V1          equal ${RandomSeed}*2
+variable  Seed_V1          equal 1000*2
+variable  Seed_V2          equal ${RandomSeed}*5
+variable  Seed_V2          equal 1000*5
+
+variable  nz_bin           equal 100
+variable  bin_size         equal 1/${nz_bin}
+variable  bin_size         equal 1/100
+variable  restartfreq      equal 2000000        # 1 ns
+variable  balance_freq     equal 8000000        # 4 ns
+variable  thermo_num       equal 1000
+variable  Lz               equal lz
+variable  TEMPERATURE      equal temp
+variable  PRESSURE         equal press
+variable  KE               equal ke
+variable  PE               equal pe
+variable  TOT_ENG          equal etotal
+variable  ECOUPLE          equal ecouple
+variable  ECONSERVE        equal econserve
+
+variable  Nnvt             equal 200000     # 1 ns
+
+#----------------------------------------------------------------------------#
+#                        Simulation cell creation
+#----------------------------------------------------------------------------#
+
+region          box block 0 40 0 40 0 240
+
+create_box      2 box                                       bond/types 1                                angle/types 1                               extra/bond/per/atom 2                       extra/angle/per/atom 1                      extra/special/per/atom 2
+Created orthogonal box = (0 0 0) to (40 40 240)
+  2 by 1 by 1 MPI processor grid
+
+molecule        co2mol CO2.mol
+Read molecule template co2mol:
+# CO2 molecule file. TraPPE-Flex model.
+  1 molecules
+  0 fragments
+  3 atoms with max type 2
+  2 bonds with max type 1
+  1 angles with max type 1
+  0 dihedrals with max type 0
+  0 impropers with max type 0
+print           "Molecule file loaded successfully"
+Molecule file loaded successfully
+
+region          liquid  block 0 40 0 40 75 165
+region          vapor_1 block 0 40 0 40 0 75
+region          vapor_2 block 0 40 0 40 165 240
+
+create_atoms   	0 random 2298 ${Seed_L}  liquid  mol co2mol 3 overlap 2 maxtry 10000
+create_atoms   	0 random 2298 7000  liquid  mol co2mol 3 overlap 2 maxtry 10000
+Created 6894 atoms
+  using lattice units in orthogonal box = (0 0 0) to (40 40 240)
+  create_atoms CPU = 0.871 seconds
+create_atoms   	0 random 26 ${Seed_V1} vapor_1 mol co2mol 3 overlap 2 maxtry 10000
+create_atoms   	0 random 26 2000 vapor_1 mol co2mol 3 overlap 2 maxtry 10000
+Created 78 atoms
+  using lattice units in orthogonal box = (0 0 0) to (40 40 240)
+  create_atoms CPU = 0.004 seconds
+create_atoms   	0 random 26 ${Seed_V2} vapor_2 mol co2mol 3 overlap 2 maxtry 10000
+create_atoms   	0 random 26 5000 vapor_2 mol co2mol 3 overlap 2 maxtry 10000
+Created 78 atoms
+  using lattice units in orthogonal box = (0 0 0) to (40 40 240)
+  create_atoms CPU = 0.004 seconds
+
+include         trappe_flex.FF
+#----------------------------------------------------------------------------#
+# FORCEFIELD - TraPPE Flexible model for CO2 (DOI- 10.1021/acs.jced.9b00006)
+#----------------------------------------------------------------------------#
+
+pair_coeff      1   1  0.0536545107   2.8         # O=[C]=O
+pair_coeff      2   2  0.1569891239   3.05        # [O]=C=O
+
+bond_coeff      1   1028.266  1.16
+
+angle_coeff     1   55.96  180
+
+mass            1   12.010700                     # C
+mass            2   15.999400                     # O
+
+set type        1   charge     +0.7000            # C
+Setting atom values ...
+  2350 settings made for charge
+set type        2   charge     -0.3500            # O
+Setting atom values ...
+  4700 settings made for charge
+# read_restart   restart_CO2.2
+
+print           "lz=${Lz}"
+lz=240
+
+#----------------------------------------------------------------------------#
+#                           GROUPS / NEIGHBOUR-LIST / BALANCE
+#----------------------------------------------------------------------------#
+
+group           car  type 1
+2350 atoms in group car
+group           oxy  type 2
+4700 atoms in group oxy
+
+neighbor	    3.0 bin
+neigh_modify    every 1 delay 0 check yes
+run_style       verlet
+balance         0.8 shift xyz 20 1.2 out tmp.balance
+Balancing ...
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/kspace.cpp:342)
+  G vector (1/distance) = 0.20169663
+  grid = 24 24 80
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.00286774
+  estimated relative force accuracy = 8.6361139e-06
+  using single precision FFTW3
+  3d grid and FFT values/proc = 50654 23040
+Generated 1 of 1 mixed pair_coeff terms from arithmetic mixing rule
+Last active /omp style is kspace_style pppm/omp
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 17
+  ghost atom cutoff = 17
+  binsize = 8.5, bins = 5 5 29
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/cut/coul/long/omp, perpetual
+      attributes: half, newton on, omp
+      pair build: half/bin/newton/omp
+      stencil: half/bin/3d
+      bin: standard
+ rebalancing time: 0.007 seconds
+  iteration count = 4
+  initial/final maximal load/proc = 3548 3722
+  initial/final imbalance factor  = 1.0065248 1.0558865
+  x cuts: 0 0.46875 1
+  y cuts: 0 1
+  z cuts: 0 1
+
+#----------------------------------------------------------------------------#
+#                           CONGUGATE-GRADIENT MINIMIZATION/Initialization
+#----------------------------------------------------------------------------#
+
+minimize        1e-6 1e-8 100000 10000000
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/kspace.cpp:342)
+  G vector (1/distance) = 0.20169663
+  grid = 24 24 80
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.00286774
+  estimated relative force accuracy = 8.6361139e-06
+  using single precision FFTW3
+  3d grid and FFT values/proc = 53320 24960
+Generated 1 of 1 mixed pair_coeff terms from arithmetic mixing rule
+Last active /omp style is kspace_style pppm/omp
+Per MPI rank memory allocation (min/avg/max) = 24.62 | 24.93 | 25.23 Mbytes
+   Step          Temp          E_pair         E_mol          TotEng         Press     
+         0   0              49336.872      7.9026918e-12  49336.872      43177.231    
+      3376   0             -11998.794      22.119582     -11976.675     -235.34144    
+Loop time of 292.566 on 2 procs for 3376 steps with 7050 atoms
+
+99.5% CPU use with 2 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+      49336.8715498832  -11976.6642038788   -11976.674863598
+  Force two-norm initial, final = 12256.268 6.4930699
+  Force max component initial, final = 805.65186 0.64829729
+  Final line search alpha, max atom move = 0.035523688 0.023029911
+  Iterations, force evaluations = 3376 6698
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 242.24     | 254.36     | 266.47     |  76.0 | 86.94
+Bond    | 0.6599     | 0.69355    | 0.7272     |   4.0 |  0.24
+Kspace  | 21.869     | 34.012     | 46.156     | 208.2 | 11.63
+Neigh   | 1.8196     | 1.8196     | 1.8197     |   0.0 |  0.62
+Comm    | 1.0877     | 1.1015     | 1.1152     |   1.3 |  0.38
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0.071783   | 0.073056   | 0.074329   |   0.5 |  0.02
+Other   |            | 0.5104     |            |       |  0.17
+
+Nlocal:           3525 ave        3666 max        3384 min
+Histogram: 1 0 0 0 0 0 0 0 0 1
+Nghost:        14320.5 ave       14709 max       13932 min
+Histogram: 1 0 0 0 0 0 0 0 0 1
+Neighs:    1.90912e+06 ave 1.98291e+06 max 1.83532e+06 min
+Histogram: 1 0 0 0 0 0 0 0 0 1
+
+Total # of neighbors = 3818230
+Ave neighs/atom = 541.59291
+Ave special neighs/atom = 2
+Neighbor list builds = 37
+Dangerous builds = 0
+fix             COM_DRIFT all momentum 1 linear 1 1 1 rescale
+velocity        all create ${simulationTemp} ${RandomSeed} mom yes rot yes dist gaussian
+velocity        all create 220 ${RandomSeed} mom yes rot yes dist gaussian
+velocity        all create 220 1000 mom yes rot yes dist gaussian
+velocity        all zero linear
+velocity        all zero angular
+thermo_style    custom step etotal press temp dt
+thermo_modify   flush yes
+thermo          ${thermo_num}
+thermo          1000
+reset_timestep  0
+write_data      ${NAME}_init.data
+write_data      CO2_init.data
+System init for write_data ...
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/kspace.cpp:342)
+  G vector (1/distance) = 0.20169663
+  grid = 24 24 80
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.00286774
+  estimated relative force accuracy = 8.6361139e-06
+  using single precision FFTW3
+  3d grid and FFT values/proc = 53320 24960
+Generated 1 of 1 mixed pair_coeff terms from arithmetic mixing rule
+Last active /omp style is kspace_style pppm/omp
+
+#----------------------------------------------------------------------------#
+#                           Compute
+#----------------------------------------------------------------------------#
+
+compute         layers  all chunk/atom bin/1d z lower ${bin_size} units reduced
+compute         layers  all chunk/atom bin/1d z lower 0.01 units reduced
+compute         T       all temp
+compute         pTensor all pressure T
+compute         mom     all momentum
+
+variable        TM      equal mass(all)
+variable        vx_com  equal c_mom[1]/v_TM
+variable        vy_com  equal c_mom[2]/v_TM
+variable        vz_com  equal c_mom[3]/v_TM
+
+#----------------------------------------------------------------------------#
+#                           Write Headers to Files
+#----------------------------------------------------------------------------#
+
+print "#Step Pxx Pyy Pzz" file pressure_tensor.dat
+#Step Pxx Pyy Pzz
+print "#Step temp press ke pe etotal ecouple econserve" file Energy.dat
+#Step temp press ke pe etotal ecouple econserve
+print "#Step px py pz COM_vx COM_vy COM_vz" file Momentum.dat
+#Step px py pz COM_vx COM_vy COM_vz
+
+#----------------------------------------------------------------------------#
+#                           NVT (Initialization/Production)
+#----------------------------------------------------------------------------#
+
+fix             NVE          all    nve
+fix             NVT          all    temp/csvr  ${simulationTemp} ${simulationTemp} 100 ${RandomSeed}
+fix             NVT          all    temp/csvr  220 ${simulationTemp} 100 ${RandomSeed}
+fix             NVT          all    temp/csvr  220 220 100 ${RandomSeed}
+fix             NVT          all    temp/csvr  220 220 100 1000
+fix             CPU_BALANCE  all    balance    ${balance_freq} 0.8 shift xyz 20 1.2
+fix             CPU_BALANCE  all    balance    8000000 0.8 shift xyz 20 1.2
+fix		        dens_profile all    ave/chunk  10 100 1000 layers density/mass file massdens_profile.dat
+fix             1            all    ave/time   10 100 1000 c_pTensor[1] c_pTensor[2] c_pTensor[3] file pressure_tensor.dat
+fix             2            all    ave/time   ${thermo_num} 1 ${thermo_num} v_TEMPERATURE v_PRESSURE v_KE v_PE v_TOT_ENG v_ECOUPLE v_ECONSERVE file Energy.dat
+fix             2            all    ave/time   1000 1 ${thermo_num} v_TEMPERATURE v_PRESSURE v_KE v_PE v_TOT_ENG v_ECOUPLE v_ECONSERVE file Energy.dat
+fix             2            all    ave/time   1000 1 1000 v_TEMPERATURE v_PRESSURE v_KE v_PE v_TOT_ENG v_ECOUPLE v_ECONSERVE file Energy.dat
+fix             3            all    ave/time   ${thermo_num} 1 ${thermo_num} c_mom[1] c_mom[2] c_mom[3] v_vx_com v_vy_com v_vz_com file Momentum.dat
+fix             3            all    ave/time   1000 1 ${thermo_num} c_mom[1] c_mom[2] c_mom[3] v_vx_com v_vy_com v_vz_com file Momentum.dat
+fix             3            all    ave/time   1000 1 1000 c_mom[1] c_mom[2] c_mom[3] v_vx_com v_vy_com v_vz_com file Momentum.dat
+
+timestep        0.5
+restart         ${restartfreq} restart_${NAME}.1 restart_${NAME}.2
+restart         2000000 restart_${NAME}.1 restart_${NAME}.2
+restart         2000000 restart_CO2.1 restart_${NAME}.2
+restart         2000000 restart_CO2.1 restart_CO2.2
+run             ${Nnvt}
+run             200000
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/kspace.cpp:342)
+  G vector (1/distance) = 0.20169663
+  grid = 24 24 80
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.00286774
+  estimated relative force accuracy = 8.6361139e-06
+  using single precision FFTW3
+  3d grid and FFT values/proc = 53320 24960
+Generated 1 of 1 mixed pair_coeff terms from arithmetic mixing rule
+Last active /omp style is kspace_style pppm/omp
+Per MPI rank memory allocation (min/avg/max) = 24.46 | 24.65 | 24.85 Mbytes
+   Step         TotEng         Press           Temp            Dt      
+         0  -7354.0943      314.94159      220            0.5          
+      1000  -3301.8536      1657.6193      217.61559      0.5          
+      2000  -2746.6053      1401.572       197.16148      0.5          
+      3000  -2299.7419     -313.87293      212.6535       0.5          
+      4000  -2209.0407      34.67536       226.92847      0.5          
+      5000  -2089.5787      235.78028      223.93176      0.5          
+      6000  -1761.6375     -25.76869       216.97112      0.5          
+      7000  -1659.8013     -86.820462      211.55282      0.5          
+      8000  -1452.6725     -36.549764      216.35809      0.5          
+      9000  -1225.3522     -319.15089      221.07669      0.5          
+     10000  -1029.5431     -246.60272      219.13825      0.5          
+     11000  -809.79347     -105.56928      218.16853      0.5          
+     12000  -777.28631     -175.06921      217.57636      0.5          
+     13000  -573.63396     -612.99755      223.69808      0.5          
+     14000  -593.15166     -45.447073      223.50098      0.5          
+     15000  -683.30684      181.76214      223.00587      0.5          
+     16000  -733.67571     -112.49657      220.27133      0.5          
+     17000  -752.07631     -404.94142      219.98941      0.5          
+     18000  -853.64533     -42.457735      221.32726      0.5          
+     19000  -908.80201     -93.005848      219.37416      0.5          
+     20000  -924.03306     -69.529063      218.65876      0.5          
+     21000  -1027.7382     -61.438009      219.44809      0.5          
+     22000  -973.62742      89.155694      218.17378      0.5          
+     23000  -1006.4231      103.37215      218.47704      0.5          
+     24000  -973.94693      0.12031968     218.80783      0.5          
+     25000  -840.00116     -132.25033      219.91482      0.5          
+     26000  -824.43105      10.049981      220.48322      0.5          
+     27000  -860.03619      235.23034      218.72403      0.5          
+     28000  -929.26393     -126.33651      219.32306      0.5          
+     29000  -879.72592     -140.82628      219.82011      0.5          
+     30000  -969.08752     -96.119269      216.31369      0.5          
+     31000  -840.9447      -64.698087      222.49052      0.5          
+     32000  -973.55841     -60.671508      216.73543      0.5          
+     33000  -1003.9664      24.815511      216.56909      0.5          
+     34000  -840.43901      83.935567      223.76443      0.5          
+     35000  -934.65923     -6.8964492      216.39205      0.5          
+     36000  -1026.7881     -31.44876       216.64891      0.5          
+     37000  -993.72517      63.327766      218.09852      0.5          
+     38000  -845.69082      82.863686      222.01448      0.5          
+     39000  -846.59543      131.65916      223.46565      0.5          
+     40000  -908.5412      -208.28604      219.86793      0.5          
+     41000  -845.14178      11.182516      220.05607      0.5          
+     42000  -825.75412     -46.137992      221.80715      0.5          
+     43000  -738.46317      20.051142      224.88557      0.5          
+     44000  -923.70559      260.47164      220.83534      0.5          
+     45000  -883.29401      119.62192      218.4126       0.5          
+     46000  -884.11217     -188.19871      221.23628      0.5          
+     47000  -859.10004     -171.90068      220.97993      0.5          
+     48000  -846.09288      78.653327      220.45692      0.5          
+     49000  -848.44883     -105.71853      221.77092      0.5          
+     50000  -776.65348     -90.330125      221.33054      0.5          
+     51000  -892.30871      0.45610076     218.40415      0.5          
+     52000  -844.96724     -309.75097      219.3268       0.5          
+     53000  -903.23089      141.54512      218.45642      0.5          
+     54000  -780.46704      224.6434       221.93687      0.5          
+     55000  -981.83322     -174.67168      215.55601      0.5          
+     56000  -875.59127      233.90174      217.00417      0.5          
+     57000  -797.72438     -143.63528      221.12257      0.5          
+     58000  -761.07194      74.514769      220.86339      0.5          
+     59000  -843.14145      219.48222      220.71229      0.5          
+     60000  -938.91491      79.514992      218.67859      0.5          
+     61000  -818.94033     -112.48773      220.02278      0.5          
+     62000  -883.62868     -141.50692      217.19586      0.5          
+     63000  -925.66668     -38.698546      218.83356      0.5          
+     64000  -714.39283      53.854257      223.48615      0.5          
+     65000  -823.21733      71.711757      221.28501      0.5          
+     66000  -916.32185      273.088        217.06332      0.5          
+     67000  -915.74839     -220.23169      216.18631      0.5          
+     68000  -896.31504     -200.3601       214.73405      0.5          
+     69000  -760.97547      173.89285      221.12386      0.5          
+     70000  -779.87742     -156.48397      222.52348      0.5          
+     71000  -808.2025      -103.9232       223.99664      0.5          
+     72000  -864.58765     -51.32837       218.56432      0.5          
+     73000  -875.7068       198.81106      219.71707      0.5          
+     74000  -797.20028      110.1262       223.20835      0.5          
+     75000  -976.27098     -105.65886      218.29148      0.5          
+     76000  -991.6812       74.196397      216.30981      0.5          
+     77000  -978.23334      76.25642       216.18911      0.5          
+     78000  -858.00164     -42.369008      219.75174      0.5          
+     79000  -858.93096     -229.47668      217.67814      0.5          
+     80000  -830.54981      332.45501      219.76416      0.5          
+     81000  -837.54878     -253.8304       218.48336      0.5          
+     82000  -789.21456     -54.676973      224.09403      0.5          
+     83000  -822.73813     -56.351373      217.23893      0.5          
+     84000  -810.07577     -74.742807      219.27572      0.5          
+     85000  -791.24606     -63.688785      220.2746       0.5          
+     86000  -830.70277      30.293236      220.38076      0.5          
+     87000  -712.62829     -2.816709       221.6497       0.5          
+     88000  -742.96581     -113.20396      222.64117      0.5          
+     89000  -806.33418      57.392657      215.45681      0.5          
+     90000  -819.11223      66.371742      217.5926       0.5          
+     91000  -758.56614      115.11255      219.04286      0.5          
+     92000  -704.36225     -23.290048      223.71393      0.5          
+     93000  -831.89482     -171.41312      219.09522      0.5          
+     94000  -779.85263     -41.723345      216.56143      0.5          
+     95000  -776.37527     -85.503126      218.17974      0.5          
+     96000  -820.8348       60.837481      214.80758      0.5          
+     97000  -717.163        160.15424      220.2662       0.5          
+     98000  -719.03201     -56.826175      220.91105      0.5          
+     99000  -825.92029     -98.89098       218.1724       0.5          
+    100000  -807.97903      78.393203      217.44912      0.5          
+    101000  -755.78507     -124.27748      222.7612       0.5          
+    102000  -796.86636     -22.591912      220.93059      0.5          
+    103000  -697.58457      63.288034      222.60577      0.5          
+    104000  -737.43948      104.68471      221.08192      0.5          
+    105000  -734.87233     -194.80605      219.88062      0.5          
+    106000  -811.10278     -51.30889       218.24313      0.5          
+    107000  -831.43526      321.68648      219.94853      0.5          
+    108000  -812.69517      400.43524      221.99117      0.5          
+    109000  -897.21982     -120.39587      218.99741      0.5          
+    110000  -817.27048     -279.18476      218.53085      0.5          
+    111000  -761.10128     -252.83742      220.79694      0.5          
+    112000  -783.19781      101.45792      216.63618      0.5          
+    113000  -867.84194      120.19904      213.83075      0.5          
+    114000  -565.94075     -131.93467      223.32498      0.5          
+    115000  -652.00264      94.913564      219.68369      0.5          
+    116000  -620.6064      -226.71794      220.13068      0.5          
+    117000  -589.73        -21.601072      223.64059      0.5          
+    118000  -707.32555     -37.306511      219.66295      0.5          
+    119000  -720.01538     -38.154318      220.35762      0.5          
+    120000  -633.20875     -84.648682      219.40712      0.5          
+    121000  -701.34412     -124.01168      221.7232       0.5          
+    122000  -789.40223     -114.66683      217.8635       0.5          
+    123000  -659.8908      -21.0152        224.95964      0.5          
+    124000  -732.55245      55.549965      217.22821      0.5          
+    125000  -765.14856      72.243538      220.36368      0.5          
+    126000  -830.30707     -36.701644      219.85266      0.5          
+    127000  -863.77865     -102.6445       218.04426      0.5          
+    128000  -782.11155     -162.85197      221.39435      0.5          
+    129000  -839.64144     -323.23715      217.56143      0.5          
+    130000  -649.23541      21.506042      221.75443      0.5          
+    131000  -621.13063      239.85936      223.58203      0.5          
+    132000  -777.92765     -419.70759      218.9801       0.5          
+    133000  -784.60163     -35.016137      218.99031      0.5          
+    134000  -845.76001      263.15061      215.21992      0.5          
+    135000  -755.56771      86.169776      218.3622       0.5          
+    136000  -599.03082     -69.889902      221.81794      0.5          
+    137000  -681.58578      109.41981      220.23013      0.5          
+    138000  -728.97645      55.67996       221.27273      0.5          
+    139000  -653.02814      85.1237        221.90445      0.5          
+    140000  -586.71719      190.65054      224.83228      0.5          
+    141000  -697.80669     -26.166462      219.4434       0.5          
+    142000  -754.23026      39.889045      217.89402      0.5          
+    143000  -817.8836       254.79842      216.95216      0.5          
+    144000  -758.65821     -75.590725      222.28591      0.5          
+    145000  -859.24141     -6.7553476      217.04083      0.5          
+    146000  -843.14626      113.7844       221.30896      0.5          
+    147000  -807.52524     -28.519184      219.65053      0.5          
+    148000  -720.09576     -85.606094      223.23914      0.5          
+    149000  -617.4745       14.411403      225.41862      0.5          
+    150000  -730.8826      -260.15895      219.88648      0.5          
+    151000  -633.49305     -40.510303      223.8209       0.5          
+    152000  -748.17196     -46.656387      219.04584      0.5          
+    153000  -858.10765     -176.18424      212.8006       0.5          
+    154000  -817.57402     -13.337524      217.75576      0.5          
+    155000  -777.7665       165.18392      216.99442      0.5          
+    156000  -794.54724      36.944952      220.92128      0.5          
+    157000  -751.03014     -37.01632       219.44732      0.5          
+    158000  -664.40626      66.520025      221.8871       0.5          
+    159000  -772.54019     -0.19125971     218.91934      0.5          
+    160000  -842.02003     -21.862875      218.5164       0.5          
+    161000  -764.05203     -60.729081      216.01262      0.5          
+    162000  -675.61731     -125.56507      223.17552      0.5          
+    163000  -709.23066     -186.65406      219.95497      0.5          
+    164000  -638.82613     -180.50462      219.98683      0.5          
+    165000  -700.64371      104.65603      221.75286      0.5          
+    166000  -699.5177       146.763        221.17783      0.5          
+    167000  -802.09031     -119.20085      218.04039      0.5          
+    168000  -745.55873      201.43684      219.75542      0.5          
+    169000  -601.01988      176.22835      221.46944      0.5          
+    170000  -690.93477     -121.88146      220.34182      0.5          
+    171000  -715.29728     -182.14814      219.21529      0.5          
+    172000  -711.04264     -193.07729      220.10512      0.5          
+    173000  -750.25389     -86.997307      217.58058      0.5          
+    174000  -709.94976      12.949272      221.58071      0.5          
+    175000  -679.14602     -26.118666      221.71121      0.5          
+    176000  -631.80826     -290.70078      220.88282      0.5          
+    177000  -675.9907       300.65654      218.68063      0.5          
+    178000  -770.74282      234.15699      220.03887      0.5          
+    179000  -704.48559     -301.68137      223.06753      0.5          
+    180000  -743.25614      53.193034      218.64784      0.5          
+    181000  -721.17587      31.096956      220.88902      0.5          
+    182000  -733.50463     -106.56423      219.41094      0.5          

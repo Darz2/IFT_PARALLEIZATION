@@ -1,0 +1,18 @@
+
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd: error: *** JOB 10599376 ON tcn934 CANCELLED AT 2025-03-18T18:27:16 ***
+slurmstepd: error: *** STEP 10599376.0 ON tcn934 CANCELLED AT 2025-03-18T18:27:16 ***
+
+JOB STATISTICS
+==============
+Job ID: 10599376
+Cluster: snellius
+User/Group: draju/draju
+State: CANCELLED (exit code 0)
+Nodes: 1
+Cores per node: 32
+CPU Utilized: 00:28:02
+CPU Efficiency: 75.09% of 00:37:20 core-walltime
+Job Wall-clock time: 00:01:10
+Memory Utilized: 1.12 GB (estimated maximum)
+Memory Efficiency: 2.00% of 56.00 GB (1.75 GB/core)

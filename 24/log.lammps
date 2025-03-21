@@ -1,0 +1,14 @@
+LAMMPS (29 Aug 2024 - Update 1)
+  using 1 OpenMP thread(s) per MPI task
+package omp 1
+using multi-threaded neighbor list subroutines
+
+# LAMMPS script to perform Surface/Interfacial tension computation of pure fluids
+
+#----------------------------------------------------------------------------#
+#                           Settings
+#----------------------------------------------------------------------------#
+
+variable        NAME index CO2
+log             ${NAME}.log
+log             CO2.log

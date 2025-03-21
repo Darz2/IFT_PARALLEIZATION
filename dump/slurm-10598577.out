@@ -1,0 +1,35 @@
+1
+
+/gpfs/scratch1/shared/draju/TRAPPE_FLEXIBLE/cutoff_14
+2
+
+/gpfs/scratch1/shared/draju/TRAPPE_FLEXIBLE/cutoff_14
+4
+
+/gpfs/scratch1/shared/draju/TRAPPE_FLEXIBLE/cutoff_14
+8
+
+/gpfs/scratch1/shared/draju/TRAPPE_FLEXIBLE/cutoff_14
+12
+
+/gpfs/scratch1/shared/draju/TRAPPE_FLEXIBLE/cutoff_14
+16
+
+/gpfs/scratch1/shared/draju/TRAPPE_FLEXIBLE/cutoff_14
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd: error: *** JOB 10598577 ON tcn942 CANCELLED AT 2025-03-20T17:13:44 DUE TO TIME LIMIT ***
+slurmstepd: error: *** STEP 10598577.2 ON tcn942 CANCELLED AT 2025-03-20T17:13:44 DUE TO TIME LIMIT ***
+
+JOB STATISTICS
+==============
+Job ID: 10598577
+Cluster: snellius
+User/Group: draju/draju
+State: TIMEOUT (exit code 0)
+Nodes: 1
+Cores per node: 48
+CPU Utilized: 16-19:22:14
+CPU Efficiency: 17.51% of 96-00:02:24 core-walltime
+Job Wall-clock time: 2-00:00:03
+Memory Utilized: 79.00 MB
+Memory Efficiency: 0.09% of 84.00 GB

@@ -1,0 +1,156 @@
+
+# LAMMPS script to perform Surface/Interfacial tension computation of pure fluids
+
+#----------------------------------------------------------------------------#
+#                           Settings 
+#----------------------------------------------------------------------------#
+
+variable        NAME index CO2
+log             ${NAME}.log
+units		    real
+atom_style	    full
+boundary        p p p
+pair_style      lj/cut/coul/long 14
+pair_modify     shift yes mix arithmetic tail no
+kspace_style    pppm 1e-5
+bond_style      harmonic
+angle_style     harmonic
+processors      2 2 *
+
+#----------------------------------------------------------------------------#
+#                               Variables
+#----------------------------------------------------------------------------#
+
+variable  TEMP_INDEX       equal 220
+variable  simulationTemp   equal ${TEMP_INDEX}
+variable  timestep         equal 0.5
+variable  RandomSeed       equal 1000
+variable  Seed_L           equal ${RandomSeed}*7
+variable  Seed_V1          equal ${RandomSeed}*2
+variable  Seed_V2          equal ${RandomSeed}*5
+
+variable  nz_bin           equal 100
+variable  bin_size         equal 1/${nz_bin}
+variable  restartfreq      equal 2000000        # 1 ns
+variable  balance_freq     equal 8000000        # 4 ns
+variable  thermo_num       equal 1000
+variable  Lz               equal lz
+variable  TEMPERATURE      equal temp
+variable  PRESSURE         equal press
+variable  KE               equal ke
+variable  PE               equal pe
+variable  TOT_ENG          equal etotal
+variable  ECOUPLE          equal ecouple
+variable  ECONSERVE        equal econserve
+
+variable  Nnvt             equal 2000000     # 1 ns
+
+#----------------------------------------------------------------------------#
+#                        Simulation cell creation 
+#----------------------------------------------------------------------------#
+
+region          box block 0 40 0 40 0 240
+
+create_box      2 box                       &
+                bond/types 1                &
+                angle/types 1               &
+                extra/bond/per/atom 2       &
+                extra/angle/per/atom 1      &
+                extra/special/per/atom 2
+
+molecule        co2mol CO2.mol
+print           "Molecule file loaded successfully"
+
+region          liquid  block 0 40 0 40 75 165
+region          vapor_1 block 0 40 0 40 0 75
+region          vapor_2 block 0 40 0 40 165 240
+
+create_atoms   	0 random 2298 ${Seed_L}  liquid  mol co2mol 3 overlap 2 maxtry 10000 
+create_atoms   	0 random 26 ${Seed_V1} vapor_1 mol co2mol 3 overlap 2 maxtry 10000
+create_atoms   	0 random 26 ${Seed_V2} vapor_2 mol co2mol 3 overlap 2 maxtry 10000
+
+include         trappe_flex.FF
+# read_restart   restart_CO2.2
+
+print           "lz=${Lz}"
+
+#----------------------------------------------------------------------------#
+#                           GROUPS / NEIGHBOUR-LIST / BALANCE
+#----------------------------------------------------------------------------#
+
+group           car  type 1
+group           oxy  type 2
+
+neighbor	    3.0 bin
+neigh_modify    every 1 delay 0 check yes
+run_style       verlet
+balance         0.8 shift xyz 20 1.2 out tmp.balance
+
+#----------------------------------------------------------------------------#
+#                           CONGUGATE-GRADIENT MINIMIZATION/Initialization
+#----------------------------------------------------------------------------#
+
+minimize        1e-6 1e-8 100000 10000000
+fix             COM_DRIFT all momentum 1 linear 1 1 1 rescale
+velocity        all create ${simulationTemp} ${RandomSeed} mom yes rot yes dist gaussian
+velocity        all zero linear
+velocity        all zero angular 
+thermo_style    custom step etotal press temp dt
+thermo_modify   flush yes
+thermo          ${thermo_num}
+reset_timestep  0
+write_data      ${NAME}_init.data
+
+#----------------------------------------------------------------------------#
+#                           Compute
+#----------------------------------------------------------------------------#
+
+compute         layers  all chunk/atom bin/1d z lower ${bin_size} units reduced
+compute         T       all temp
+compute         pTensor all pressure T
+compute         mom     all momentum
+
+variable        TM      equal mass(all)
+variable        vx_com  equal c_mom[1]/v_TM
+variable        vy_com  equal c_mom[2]/v_TM
+variable        vz_com  equal c_mom[3]/v_TM
+
+#----------------------------------------------------------------------------#
+#                           Write Headers to Files
+#----------------------------------------------------------------------------#
+
+print "#Step Pxx Pyy Pzz" file pressure_tensor.dat
+print "#Step temp press ke pe etotal ecouple econserve" file Energy.dat
+print "#Step px py pz COM_vx COM_vy COM_vz" file Momentum.dat
+
+#----------------------------------------------------------------------------#
+#                           NVT (Initialization/Production)
+#----------------------------------------------------------------------------#
+
+fix             NVE          all    nve
+fix             NVT          all    temp/csvr  ${simulationTemp} ${simulationTemp} 100 ${RandomSeed}
+fix             CPU_BALANCE  all    balance    ${balance_freq} 0.8 shift xyz 20 1.2
+fix		        dens_profile all    ave/chunk  10 100 1000 layers density/mass file massdens_profile.dat
+fix             1            all    ave/time   10 100 1000 c_pTensor[1] c_pTensor[2] c_pTensor[3] file pressure_tensor.dat
+fix             2            all    ave/time   ${thermo_num} 1 ${thermo_num} v_TEMPERATURE v_PRESSURE v_KE v_PE v_TOT_ENG v_ECOUPLE v_ECONSERVE file Energy.dat
+fix             3            all    ave/time   ${thermo_num} 1 ${thermo_num} c_mom[1] c_mom[2] c_mom[3] v_vx_com v_vy_com v_vz_com file Momentum.dat
+
+timestep        0.5
+restart         ${restartfreq} restart_${NAME}.1 restart_${NAME}.2
+run             ${Nnvt}
+
+unfix           NVT
+run             ${Nnvt}
+
+unfix           COM_DRIFT
+unfix           NVE
+unfix           CPU_BALANCE
+unfix           dens_profile
+unfix           1
+unfix           2
+unfix           3
+
+write_data      ${NAME}_final.data
+reset_timestep  0
+
+quit
